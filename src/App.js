@@ -1,7 +1,6 @@
 import './App.css';
 
 import axios from 'axios';
-import { createRoot } from 'react-dom/client';
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 
@@ -10,7 +9,7 @@ function Box(props) {
 	const [ hovered, setHover ] = useState(false);
 	const [ active, setActive ] = useState(false);
 
-	useFrame( (state, delta) => (meshRef.current.rotation.x += delta) );
+	//useFrame( (state, delta) => (meshRef.current.rotation.x += delta) );
 	
 	return (
 		<mesh
@@ -20,14 +19,28 @@ function Box(props) {
 			onClick = { (event) => setActive(!active) }
 			onPointerOver = { (event) => setHover(true) }
 			onPointerOut = { (event) => setHover(false) }>
-			<boxGeometry args={[1,1,1]} />
+			<boxGeometry args={[2,2,2]} />
 			<meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
 		</mesh>
 	);
 }
 
+function Sphere(props) {
+	const meshRef = useRef();
+//	useFrame( (state, delta) => (meshRef.current.rotation.x += delta) );
+	return (
+		<mesh
+			{...props}
+			ref = {meshRef}
+			scale = {1}>
+			<sphereGeometry args={[4,32,32]}/>
+			<meshStandardMaterial color={'white'}/>
+		</mesh>
+	);
+}
+
 function App() {
-	const [ data, setData ] = React.useState();
+	const [ data, setData ] = useState();
 	const url = "http://localhost:8000";
 	
 	const GetData = () => {
@@ -38,13 +51,16 @@ function App() {
 	};
 
 	return (
-		<div>
+		<div id="canvas-container">
 			{data ? data : <button onClick={GetData}>データ</button>}
-			<Canvas>
-				<ambientLight/>
-				<pointLight position={[10,10,10]} />
-				<Box position={[-1.2,0,0]}/>
-				<Box position={[1.2,0,0]}/>
+			<Canvas
+//			shadows = {"basic"}
+			camera = {{position: [30,30,50]}}>
+				<ambientLight intensity={1}/>
+				<directionalLight color={"white"} intensity={10} position={[0,0,10]} decay={20} />
+				<Box position={[-12,0,0]}/>
+				<Box position={[12,0,0]}/>
+				<Sphere position={[0,20,0]}/>
 			</Canvas>
 		</div>
 	);
