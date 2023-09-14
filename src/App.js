@@ -57,7 +57,7 @@ function Scene(props) {
 function Graph3D(props) {
 	const { useMemo, useState, useCallback, useRef } = React;
 
-	const NODE_R = 8;
+	const NODE_R = 4;
 	const data = useMemo( () => {
 		const gData = props.graphData;
 
@@ -65,26 +65,22 @@ function Graph3D(props) {
 			const a = gData.nodes.filter( node => node.id === link.source );
 			const b = gData.nodes.filter( node => node.id === link.target );
 
-			//console.log(a);
-			//console.log(a[0]);
-			//console.log(a[0].neighbors);
-	       		a[0].neighbors ? console.log("foo") : a[0].neighbors = [];
-			b[0].neighbors ? console.log("foo") : b[0].neighbors = [];
-//			(! a[0].neighbors) && (a.neighbors = []);
-//			(! b[0].neighbors) && (b.neighbors = []);
-			//console.log(a[0].neighbors);
+//	       		a[0].neighbors ? {} : a[0].neighbors = [];
+//			b[0].neighbors ? {} : b[0].neighbors = [];
+			!a[0].neighbors && (a[0].neighbors = []);
+			!b[0].neighbors && (b[0].neighbors = []);
 			a[0].neighbors.push(b[0]);
 			b[0].neighbors.push(a[0]);
 
-	       		a[0].links ? console.log("foo") : a[0].links = [];
-	       		b[0].links ? console.log("foo") : b[0].links = [];
-//			a[0].links && (a.links = []);
-//			b[0].links && (b.links = []);
+//	       		a[0].links ? console.log("foo") : a[0].links = [];
+//	       		b[0].links ? console.log("foo") : b[0].links = [];
+			!a[0].links && (a[0].links = []);
+			!b[0].links && (b[0].links = []);
 			a[0].links.push(link);
 			b[0].links.push(link);
 		});
 
-//		console.log(gData);
+		console.log(gData);
 		return gData;
 	}, []);
 
@@ -147,13 +143,10 @@ function Graph3D(props) {
 			ref={fgRef}
 			graphData={data}
 			nodeRelSize={NODE_R}
+			nodeSize={node => highlightNodes.has(node) ? NODE_R * 1.5 : NODE_R}
 			autoPauseRedraw={false}
 			linkWidth={link => highlightLinks.has(link) ? 3 : 1}
-			linkDirectionalParticles={3.5}
-			linkDirectionalParticleWidth={link => highlightLinks.has(link) ? 4 : 0}
-			linkCurvature={0.25}
-			nodeCanvasObjectMode={node => highlightNodes.has(node) ? 'before' : undefined}
-			nodeCanvasObject={paintRing}
+			linkCurvature={0.0}
 			onNodeHover={handleNodeHover}
 			onLinkHover={handleLinkHover}
 			onNodeClick={handleNodeClick}
@@ -164,7 +157,7 @@ function Graph3D(props) {
 function Graph2D(props) {
 	const { useMemo, useState, useCallback, useRef } = React;
 
-	const NODE_R = 8;
+	const NODE_R = 4;
 	const data = useMemo( () => {
 		const gData = props.graphData;
 
@@ -172,28 +165,21 @@ function Graph2D(props) {
 			const a = gData.nodes.filter( node => node.id === link.source );
 			const b = gData.nodes.filter( node => node.id === link.target );
 
-			//console.log(a);
-			//console.log(a[0]);
-			//console.log(a[0].neighbors);
-	       		a[0].neighbors ? console.log("foo") : a[0].neighbors = [];
-			b[0].neighbors ? console.log("foo") : b[0].neighbors = [];
-//			(! a[0].neighbors) && (a.neighbors = []);
-//			(! b[0].neighbors) && (b.neighbors = []);
-			//console.log(a[0].neighbors);
+			!a[0].neighbors && (a[0].neighbors = []);
+			!b[0].neighbors && (b[0].neighbors = []);
 			a[0].neighbors.push(b[0]);
 			b[0].neighbors.push(a[0]);
 
-	       		a[0].links ? console.log("foo") : a[0].links = [];
-	       		b[0].links ? console.log("foo") : b[0].links = [];
-//			a[0].links && (a.links = []);
-//			b[0].links && (b.links = []);
+			!a[0].links && (a[0].links = []);
+			!b[0].links && (b[0].links = []);
 			a[0].links.push(link);
 			b[0].links.push(link);
 		});
-
-//		console.log(gData);
+		
 		return gData;
 	}, []);
+
+	const M = Math.max(...data.nodes.map((node) => node.n_visited))
 
 	const [highlightNodes, setHighlightNodes] = useState(new Set());
 	const [highlightLinks, setHighlightLinks] = useState(new Set());
@@ -204,9 +190,10 @@ function Graph2D(props) {
 		setHighlightLinks(highlightLinks);
 	};
 
-	const handleNodeHover = node => {
+	const handleNodeHover = (node) => {
 		highlightNodes.clear();
 		highlightLinks.clear();
+
 		if (node) {
 			highlightNodes.add(node);
 			node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
@@ -217,7 +204,7 @@ function Graph2D(props) {
 		updateHighlight();
 	};
 
-	const handleLinkHover = link => {
+	const handleLinkHover = (link) => {
 		highlightNodes.clear();
 		highlightLinks.clear();
 
@@ -231,32 +218,27 @@ function Graph2D(props) {
 	};
 
 	const paintRing = useCallback( (node, ctx) => {
-		ctx.beginPath();
-		ctx.arc(node.x, node.y, NODE_R * 1.4, 0, 2*Math.PI, false);
-		ctx.fillStyle = node === hoverNode ? 'red' : 'orange';
-		ctx.fill();
+//		ctx.beginPath();
+//		ctx.arc(node.x, node.y, Math.sqrt(node.val)*NODE_R+1, 0, 2*Math.PI, false);
+//		ctx.fillStyle = node == hoverNode ? 'yellow' : 'orange';
+//		ctx.fill();
 	}, [hoverNode]);
 
 	const fgRef = useRef();
-	console.log(fgRef);
 
 	const handleNodeClick = useCallback( node => {
-		const distance = 40;
-		const distRatio = 1 + distance/Math.hypot(node.x, node.y);
-		fgRef.current.cameraPosition(
-			{ x: node.x*distRatio, y: node.y*distRatio },
-			node,
-			3000
-		);
+		fgRef.current.zoomToFit(400);
 	}, [fgRef]);
 
 	return (
 		<ForceGraph2D
+			ref={fgRef}
 			graphData={data}
 			nodeRelSize={NODE_R}
+			nodeColor={node => '#'+(node.n_visited/M*255).toString(16)+'0044'}
 			autoPauseRedraw={false}
 			linkWidth={link => highlightLinks.has(link) ? 3 : 1}
-			linkDirectionalParticles={3.5}
+			linkDirectionalParticles={2.0}
 			linkDirectionalParticleWidth={link => highlightLinks.has(link) ? 4 : 0}
 			linkCurvature={0.25}
 			nodeCanvasObjectMode={node => highlightNodes.has(node) ? 'before' : undefined}
@@ -282,7 +264,7 @@ function App() {
 
 	return (
 		<div id="canvas-container">
-			{data ? <Graph3D graphData={data}/> : <button onClick={GetData}>データ</button>}
+			{data ? <Graph2D graphData={data}/> : <button onClick={GetData}>データ</button>}
 		</div>
 	);
 }
