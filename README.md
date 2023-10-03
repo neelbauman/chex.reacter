@@ -1,3 +1,10 @@
+# chex.reacter
+シェフのフロントエンド
+
+これを作成するにあたって、adobeのデザインシステムであるところのSpectrumを勉強する。
+Spectrumを勉強することは、デザインシステムの一般構成を勉強することにつながる。
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
