@@ -1,32 +1,68 @@
 import './App.css';
 
 import axios from 'axios';
-
-import React, { useRef, useState } from 'react';
+import React from 'react';
 
 import {
+	Cell, Column, Row, TableView, TableBody, TableHeader,
+	Form, TextField,
 	Button,
+	Grid, View,
 	defaultTheme,
 	Provider
 } from '@adobe/react-spectrum';
 
-
-import { ForceGraph3D, ForceGraph2D } from 'react-force-graph';
-
+import { ForceGraph2D } from 'react-force-graph';
 
 
-function Graph2D(props) {
-	const { useMemo, useState, useCallback, useRef } = React;
+const { useMemo, useState, useCallback, useRef } = React;
 
-	const NODE_R = 4;
+const axios_instance = axios.create({
+	baseURL: "https://252c-34-23-167-118.ngrok-free.app",
+	timeout: 60000,
+	headers: {
+		"ngrok-skip-browser-warning": true
+	}
+});
+
+
+function EntitiesView ( {datas} ) {
+	return (
+		<View overflow="scroll">
+			{ datas.map(
+				( data ) => {
+					return (
+						<ul>
+							<li>{data.text}</li>
+							<ul>{
+								data.pred_entities.map(
+									( pred_entity ) => {
+										return <li>{pred_entity.name}: {pred_entity.type}</li>
+									}
+								)
+							}</ul>
+						</ul>
+					)
+				}
+			)}
+		</View>
+	)
+}
+
+function Graph2D({graphData}) {
+
+	const [highlightNodes, setHighlightNodes] = useState(new Set());
+	const [highlightLinks, setHighlightLinks] = useState(new Set());
+	const [hoverNode, setHoverNode] = useState(null);
+	const [predEntities, setPredEntities] = useState();
+	const fgRef = useRef();
+
+
 	const data = useMemo( () => {
-		const gData = props.graphData;
-
-		gData.links.forEach( link => {
-			const a = gData.nodes.filter( node => node.id === link.source );
-			const b = gData.nodes.filter( node => node.id === link.target );
-
-			//console.log(a);console.log(b)
+		const g = graphData
+		g.links.forEach( link => {
+			const a = graphData.nodes.filter( node => node.id === link.source );
+			const b = graphData.nodes.filter( node => node.id === link.target );
 
 			!a[0].neighbors && (a[0].neighbors = []);
 			!b[0].neighbors && (b[0].neighbors = []);
@@ -38,16 +74,11 @@ function Graph2D(props) {
 			a[0].links.push(link);
 			b[0].links.push(link);
 		});
-		
-		return gData;
-	}, []);
+		return g;
+	}, [ graphData ]);
 
-	const max = Math.max(...data.nodes.map((node) => node.n_visited));
-	console.log(max);
-
-	const [highlightNodes, setHighlightNodes] = useState(new Set());
-	const [highlightLinks, setHighlightLinks] = useState(new Set());
-	const [hoverNode, setHoverNode] = useState(null);
+	const NODE_R = 4;
+	const max = Math.max(...data.nodes.map((node) => node.value));
 
 	const updateHighlight = () => {
 		setHighlightNodes(highlightNodes);
@@ -63,7 +94,6 @@ function Graph2D(props) {
 			node.neighbors.forEach(neighbor => highlightNodes.add(neighbor));
 			node.links.forEach(link => highlightLinks.add(link));
 		}
-
 		setHoverNode(node || null);
 		updateHighlight();
 	};
@@ -77,7 +107,6 @@ function Graph2D(props) {
 			highlightNodes.add(link.source);
 			highlightNodes.add(link.target);
 		}
-
 		updateHighlight();
 	};
 
@@ -88,58 +117,97 @@ function Graph2D(props) {
 		ctx.stroke();
 	}, [hoverNode]);
 
-	const fgRef = useRef();
-
-	const handleNodeClick = useCallback( node => {
-		fgRef.current.zoomToFit(400);
-		window.open(node.id, '_blank');
-	}, [fgRef]);
+	const handleNodeClick = ( node ) => {
+		axios_instance.get("/nodes/", {
+			params: {
+				node_id: node.id
+			},
+			timeout: 60000*10
+		}).then(
+			( res ) => {
+				console.log(res.data)
+				setPredEntities(res.data)
+			}
+		)
+	}
 
 	return (
-		<ForceGraph2D
-			ref={fgRef}
-			graphData={data}
-			nodeLabel={node => node.n_visited}
-			nodeColor={node => '#'+(Math.floor(node.n_visited/max*255)).toString(16).padStart(2,'0')+'0000'}
-			nodeRelSize={NODE_R}
-			autoPauseRedraw={false}
-			linkWidth={link => highlightLinks.has(link) ? 3 : 1}
-			linkDirectionalParticles={2.0}
-			linkDirectionalParticleWidth={link => highlightLinks.has(link) ? 4 : 0}
-			linkCurvature={0.25}
-			nodeCanvasObjectMode={node => highlightNodes.has(node) ? 'before' : undefined}
-			nodeCanvasObject={paintRing}
-			onNodeHover={handleNodeHover}
-			onLinkHover={handleLinkHover}
-			onNodeClick={handleNodeClick}
-		/>
+		<Grid areas={["left right"]} columns="1fr 1fr" width="100%">
+			<View gridArea="left">
+			<ForceGraph2D
+				ref={fgRef}
+				graphData={data}
+				nodeLabel={ node => node.id }
+				nodeColor={ node => {
+					return '#'+(Math.floor(node.value/max*255)).toString(16).padStart(2,'0')+'0000'
+				}}
+				nodeRelSize={NODE_R}
+				autoPauseRedraw={false}
+				linkWidth={link => highlightLinks.has(link) ? 3 : 1}
+				linkDirectionalParticles={2.0}
+				linkDirectionalParticleWidth={link => highlightLinks.has(link) ? 4 : 0}
+				linkCurvature={0.25}
+				nodeCanvasObjectMode={node => highlightNodes.has(node) ? 'before' : undefined}
+				nodeCanvasObject={paintRing}
+				onNodeHover={handleNodeHover}
+				onLinkHover={handleLinkHover}
+				onNodeClick={handleNodeClick}
+			/>
+			</View>
+			<View gridArea="right">
+				{ predEntities ? <EntitiesView datas={predEntities}/> : <View/> }
+			</View>
+		</Grid>
 	);
 }
 
-function App() {
 
-	const [ data, setData ] = useState();
-	const url = "http://localhost:8000";
-	
-	const GetData = () => {
-		axios.get(url)
-		.then( (res) => {
-			setData(res.data)
-		});
+function GraphView() {
+	const [ filepath, setFilepath ] = useState("tts/dom.json")
+	const [ graphData, setGraphData ] = useState({
+		nodes: [],
+		links: []
+	})
+
+	const getGraphData = (filepath) => {
+		axios_instance.get("/graph/", {
+			params: {
+				filepath: filepath
+			}
+		}).then(
+			(res) => {
+				setGraphData(res.data)
+				console.log(res.data)
+				console.log(graphData)
+			}
+		)
 	};
 
+	// レンダー時、filepathからグラフデータを取得
+	const handleButtonPress = (e) => {
+		getGraphData(filepath)
+	}
+
+	//IDEA 座標計算結果をメモしておけば座標の再計算つまり再描画なく表示だけを切り替えられる
+	return (
+		<View width="100vw">
+			<Form isRequired>
+				<TextField value={filepath} onChange={setFilepath}/>
+			</Form>
+			<Button variant="primary" onPress={handleButtonPress}>
+				Get Graph Data
+			</Button>
+			{ graphData ? <Graph2D graphData={graphData}/> : <View/> }
+		</View>
+	)
+
+}
+
+
+function App() {
 	return (
 		<Provider theme={defaultTheme}>
-			<Button
-				variant="accent"
-				onPress={() => alert('Hey there!')}
-			>
-				Hello React Spectrum!
-			</Button>
-
-			<div id="canvas-container">
-				{data ? <Graph2D graphData={data}/> : <button onClick={GetData}>データ</button>}
-			</div>
+			<GraphView></GraphView>
 		</Provider>
 	);
 }
