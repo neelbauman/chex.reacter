@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/chex.reacter/static/css/main.e1312fc8.css",
+    "main.js": "/chex.reacter/static/js/main.85175fc9.js",
+    "static/js/787.0f1161e8.chunk.js": "/chex.reacter/static/js/787.0f1161e8.chunk.js",
+    "index.html": "/chex.reacter/index.html",
+    "main.e1312fc8.css.map": "/chex.reacter/static/css/main.e1312fc8.css.map",
+    "main.85175fc9.js.map": "/chex.reacter/static/js/main.85175fc9.js.map",
+    "787.0f1161e8.chunk.js.map": "/chex.reacter/static/js/787.0f1161e8.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e1312fc8.css",
+    "static/js/main.85175fc9.js"
+  ]
+}
