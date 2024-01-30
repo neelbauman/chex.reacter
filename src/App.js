@@ -4,12 +4,11 @@ import axios from 'axios';
 import React from 'react';
 
 import {
-	Cell, Column, Row, TableView, TableBody, TableHeader,
 	Form, TextField,
 	Button,
 	Grid, View,
-	defaultTheme,
-	Provider
+	Cell, Column, Row, TableView, TableBody, TableHeader,
+	Provider, defaultTheme
 } from '@adobe/react-spectrum';
 
 import { ForceGraph2D } from 'react-force-graph';
@@ -18,7 +17,7 @@ import { ForceGraph2D } from 'react-force-graph';
 const { useMemo, useState, useCallback, useRef } = React;
 
 const axios_instance = axios.create({
-	baseURL: "https://252c-34-23-167-118.ngrok-free.app",
+	baseURL: "https://c9ba-34-121-3-202.ngrok-free.app",
 	timeout: 60000,
 	headers: {
 		"ngrok-skip-browser-warning": true
@@ -163,7 +162,7 @@ function Graph2D({graphData}) {
 
 
 function GraphView() {
-	const [ filepath, setFilepath ] = useState("tts/dom.json")
+	const [ filepath, setFilepath ] = useState("tts/oldmath.json")
 	const [ graphData, setGraphData ] = useState({
 		nodes: [],
 		links: []
@@ -190,7 +189,7 @@ function GraphView() {
 
 	//IDEA 座標計算結果をメモしておけば座標の再計算つまり再描画なく表示だけを切り替えられる
 	return (
-		<View width="100vw">
+		<View>
 			<Form isRequired>
 				<TextField value={filepath} onChange={setFilepath}/>
 			</Form>
@@ -200,11 +199,17 @@ function GraphView() {
 			{ graphData ? <Graph2D graphData={graphData}/> : <View/> }
 		</View>
 	)
-
 }
 
 
 function App() {
+	const axios_instance = axios.create({
+		baseURL: "https://c9ba-34-121-3-202.ngrok-free.app",
+		timeout: 60000,
+		headers: {
+			"ngrok-skip-browser-warning": true
+		}
+	});
 	return (
 		<Provider theme={defaultTheme}>
 			<GraphView></GraphView>
