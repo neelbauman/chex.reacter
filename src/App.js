@@ -17,7 +17,8 @@ import { ForceGraph2D } from 'react-force-graph';
 const { useMemo, useState, useCallback, useRef } = React;
 
 const axios_instance = axios.create({
-	baseURL: "https://c9ba-34-121-3-202.ngrok-free.app",
+	//baseURL: "https://c9ba-34-121-3-202.ngrok-free.app",
+	baseURL: "http://localhost:8000",
 	timeout: 60000,
 	headers: {
 		"ngrok-skip-browser-warning": true
@@ -48,7 +49,7 @@ function EntitiesView ( {datas} ) {
 	)
 }
 
-function Graph2D({graphData}) {
+function Graph2D({axios_instance, graphData}) {
 
 	const [highlightNodes, setHighlightNodes] = useState(new Set());
 	const [highlightLinks, setHighlightLinks] = useState(new Set());
@@ -121,7 +122,7 @@ function Graph2D({graphData}) {
 			params: {
 				node_id: node.id
 			},
-			timeout: 60000*10
+			timeout: 600000
 		}).then(
 			( res ) => {
 				console.log(res.data)
@@ -134,7 +135,7 @@ function Graph2D({graphData}) {
 		<Grid areas={["left right"]} columns="1fr 1fr" width="100%">
 			<View gridArea="left">
 			<ForceGraph2D
-				ref={fgRef}
+				width={500}
 				graphData={data}
 				nodeLabel={ node => node.id }
 				nodeColor={ node => {
@@ -160,15 +161,30 @@ function Graph2D({graphData}) {
 	);
 }
 
+function InitGraphView ( {baseURL} ) {
+		
+}
 
-function GraphView() {
+
+function GraphView( {width, height} ) {
+	const [ init, setInit ] = useState(false)
+	const [ baseURL, setBaseURL ] = useState()
 	const [ filepath, setFilepath ] = useState("tts/oldmath.json")
 	const [ graphData, setGraphData ] = useState({
 		nodes: [],
 		links: []
 	})
+	const graph2DRef = useRef(null);
 
-	const getGraphData = (filepath) => {
+	const axios_instance = axios.create({
+		baseURL: baseURL,
+		timeout: 60000,
+		headers: {
+			"ngrok-skip-browser-warning": true
+		}
+	});
+
+	const getGraphData = ( filepath ) => {
 		axios_instance.get("/graph/", {
 			params: {
 				filepath: filepath
@@ -182,37 +198,53 @@ function GraphView() {
 		)
 	};
 
-	// レンダー時、filepathからグラフデータを取得
-	const handleButtonPress = (e) => {
+
+	const handleGetGraphDataButtonPress = ( e ) => {
 		getGraphData(filepath)
 	}
 
+	const handleSetAPIURLButtonPress = ( e ) => {
+		setInit(true)
+	}
+		
+
 	//IDEA 座標計算結果をメモしておけば座標の再計算つまり再描画なく表示だけを切り替えられる
 	return (
-		<View>
-			<Form isRequired>
-				<TextField value={filepath} onChange={setFilepath}/>
-			</Form>
-			<Button variant="primary" onPress={handleButtonPress}>
-				Get Graph Data
-			</Button>
-			{ graphData ? <Graph2D graphData={graphData}/> : <View/> }
-		</View>
+		init ? (
+			<Grid>
+				<Form isRequired>
+					<TextField value={filepath} onChange={setFilepath}/>
+				</Form>
+				<Button variant="primary" onPress={handleGetGraphDataButtonPress}>
+					Get Graph Data
+				</Button>
+				{ graphData ? <Graph2D ref={graph2DRef} axios_instance={axios_instance} graphData={graphData}/> : <View/> }
+			</Grid>
+		) : (
+			<Grid justifyContent="center" alignContent="center" alignItems="end" gap="10px">
+				<Form isRequired>
+					<TextField value={baseURL} onChange={setBaseURL}/>
+				</Form>
+				<Button variant="primary" onPress={handleSetAPIURLButtonPress}>
+					Set API URL
+				</Button>
+			</Grid>
+		)
 	)
 }
 
 
 function App() {
-	const axios_instance = axios.create({
-		baseURL: "https://c9ba-34-121-3-202.ngrok-free.app",
-		timeout: 60000,
-		headers: {
-			"ngrok-skip-browser-warning": true
-		}
-	});
+	const width = "100vw"
+	const height = "100vh"
+
+	const [ graphViewNumber, setGraphViewNumber ] = useState(1)
+
 	return (
 		<Provider theme={defaultTheme}>
-			<GraphView></GraphView>
+			<Grid width={width} height={height}>
+				<GraphView></GraphView>
+			</Grid>
 		</Provider>
 	);
 }
